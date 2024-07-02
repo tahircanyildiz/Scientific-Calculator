@@ -1,3 +1,4 @@
+## Contributors
 -Added decimal numbers.
 -Fixed error margin issue with decimal numbers.
 -Deletion operation is working correctly.
