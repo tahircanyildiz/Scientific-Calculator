@@ -31,7 +31,6 @@ function calculate() {
         result.value = 'Error';
     }
 }
-
 function transformExpression(expression) {
     // Üs  Math.pow 
     expression = expression.replace(/(\d+|\w+)\^(\d+)/g, 'Math.pow($1,$2)');
