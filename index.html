@@ -10,11 +10,13 @@
     <div class="calculator">
         <div class="display">
             <input type="text" id="result" readonly>
+            <button class="btn backspace-btn" onclick="backspace()">&#9003;</button>
+
         </div>
         <div class="buttons">
+            <button class="btn" onclick="showHistory()">H</button>
             <button class="btn" onclick="clearDisplay()">C</button>
-            <button class="btn" onclick="backspace()">←</button>
-            <button class="btn" onclick="toggleParenthesis()">( )</button>
+            <button class="btn" onclick="toggleScientific()">Sci</button>
             <button class="btn" onclick="appendToDisplay('/')">/</button>
             <button class="btn" onclick="appendToDisplay('7')">7</button>
             <button class="btn" onclick="appendToDisplay('8')">8</button>
@@ -31,19 +33,33 @@
             <button class="btn" onclick="appendToDisplay('0')">0</button>
             <button class="btn" onclick="appendToDisplay('.')">.</button>
             <button class="btn" onclick="calculate()">=</button>
-            <button class="btn" onclick="toggleScientific()">Sci</button>
-            <div id="scientific-buttons" class="hidden">
-                <button class="btn" onclick="appendToDisplay('sin')">sin</button>
-                <button class="btn" onclick="appendToDisplay('cos')">cos</button>
-                <button class="btn" onclick="appendToDisplay('tan')">tan</button>
-                <button class="btn" onclick="appendToDisplay('cot')">cot</button>
-                <button class="btn" onclick="appendToDisplay('√')">√</button>
-                <button class="btn" onclick="square()">x²</button>
-                <button class="btn" onclick="appendToDisplay('^')">^</button>
-            </div>
+            <button class="btn" onclick="toggleParenthesis()">( )</button>
+                
+        </div>
+        <div id="scientific-buttons" class="hidden">
+            <button class="btn" onclick="appendToDisplay('√')">√</button>
+            <button class="btn" onclick="appendToDisplay('sin')">sin</button>
+            <button class="btn" onclick="appendToDisplay('cos')">cos</button>
+            <button class="btn" onclick="appendToDisplay('tan')">tan</button>
+            <button class="btn" onclick="appendToDisplay('cot')">cot</button>
+            <button class="btn" onclick="appendToDisplay('ln')">ln</button>
+            <button class="btn" onclick="appendToDisplay('log')">log</button>
+            <button class="btn" onclick="appendToDisplay('e^')">e^x</button>
+            <button class="btn" onclick="appendToDisplay('^2')">x²</button>
+            <button class="btn" onclick="appendToDisplay('^')">x^y</button>
+            <button class="btn" onclick="appendToDisplay('abs')">|x|</button>
+            <button class="btn" onclick="appendToDisplay('&#960;')">&#960;</button>
+            <button class="btn" onclick="appendToDisplay('e')">e</button>
 
+
+            <!-- aklına geldikçe ekle -->
+      </div>      
+    </div>
+    <div id="history" class="history hidden">
+        <div id="history-content">
             
         </div>
+        <div><button class="btn" onclick="clearHistory()">Temizle</button></div>
     </div>
     <script src="script.js"></script>
 </body>

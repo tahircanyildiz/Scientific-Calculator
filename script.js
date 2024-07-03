@@ -1,6 +1,8 @@
 let result = document.getElementById('result');
 let isScientificVisible = false;
 let openParenthesisCount = 0;
+let history = loadHistory(); 
+let isHistoryVisible = false;
 
 function appendToDisplay(value) {
     result.value += value;
@@ -9,6 +11,71 @@ function appendToDisplay(value) {
 function clearDisplay() {
     result.value = '';
     openParenthesisCount = 0;
+}
+
+function showHistory() {
+    let historyDiv = document.getElementById('history');
+    if (historyDiv) {
+        if (isHistoryVisible) {
+            historyDiv.classList.add('hidden');
+        } else {
+            showHistoryContent();
+            historyDiv.classList.remove('hidden');
+        }
+        isHistoryVisible = !isHistoryVisible;
+    } else {
+        console.error('history elementi bulunamadı!');
+    }
+}
+
+function showHistoryContent() {
+    let historyContentDiv = document.getElementById('history-content');
+    
+    historyContentDiv.innerHTML = '';
+
+    if (history.length === 0) {
+        let historyDiv = document.getElementById('history');
+        if (historyDiv) {
+            historyDiv.classList.add('hidden'); 
+            isHistoryVisible = false;
+        }
+        return;
+    }
+
+    for (let i = 0; i < history.length; i++) {
+        let operation = history[i];
+        let operationElement = document.createElement('div');
+        operationElement.textContent = operation.expression + ' = ' + operation.result;
+
+        let deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Sil';
+        deleteButton.setAttribute('data-index', i); // Hangi işlemi sileceğimizi belirlemek için index'i veri olarak saklıyoruz
+        deleteButton.addEventListener('click', function() {
+            deleteHistoryItem(i);
+        });
+        operationElement.appendChild(deleteButton);
+        historyContentDiv.appendChild(operationElement);
+    }
+}
+
+function deleteHistoryItem(index) {
+    history.splice(index, 1); 
+    saveHistory(); 
+    showHistoryContent(); 
+}
+
+function clearHistory() {
+    history = []; // geçmişi boş hale getirdim
+    let historyContentDiv = document.getElementById('history-content');
+    historyContentDiv.innerHTML = ''; // History içeriğini temizleme kısmı çalışıyor
+    localStorage.removeItem('calculatorHistory'); // Local storage'dan geçmişi silme kısmı çalışıyor
+    let historyDiv = document.getElementById('history');
+    if (historyDiv) {
+        historyDiv.classList.add('hidden'); 
+        isHistoryVisible = false;
+    } else {
+        console.error('history elementi bulunamadı!');
+    }
 }
 
 function backspace() {
@@ -25,18 +92,68 @@ function calculate() {
     try {
         let expression = result.value;
         expression = transformExpression(expression);
-        result.value = eval(expression);
+        let evalResult = eval(expression);
+        result.value = Number(evalResult.toFixed(10)).toString(); // Sayıyı stringe çevirerek atama
         openParenthesisCount = 0;
+        history.push({ expression:expression, result: result.value });
+        saveHistory(); // Geçmişi kaydet
     } catch (error) {
         result.value = 'Error';
     }
 }
+
 function transformExpression(expression) {
-    // Üs  Math.pow 
-    expression = expression.replace(/(\d+|\w+)\^(\d+)/g, 'Math.pow($1,$2)');
-    // √  Math.sqrt ür
+    // Üs Math.pow
+    expression = expression.replace(/(\d+|\w+|π)\^(\d+)/g, function(match, base, exponent) {
+        if (base === 'π') {
+            base = 'Math.PI';
+        }
+        return 'Math.pow(' + base + ',' + exponent + ')';
+    });  
     expression = expression.replace(/√(\d+)/g, 'Math.sqrt($1)');
     expression = expression.replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)');
+   
+    // Pi dönüşümü düzelt
+    expression = expression.replace(/(\d*)π/g, function(match, p1) {
+        if (p1) {
+            return p1 + '*Math.PI'; // Öncesinde sayı varsa
+        } else {
+            return 'Math.PI';
+        }
+    });
+    // e dönüşümü:
+    expression = expression.replace(/(\d*)e/g, function(match, p1) {
+        if (p1) {
+            return p1 + '*Math.E'; // Öncesinde sayı varsa
+        } else {
+            return 'Math.E';
+        }
+    });
+   // abs için düzeltme çalışmıyor şu an
+   expression = expression.replace(/abs\((-?\d+(\.\d+)?)\)/g, 'Math.abs($1)');
+
+  // abs bu çalışıyor tekrar kontrol et
+   expression = expression.replace(/abs(-?\d+(\.\d+)?)/g, function(match, number) {
+    return 'Math.abs(' + number + ')';
+});
+
+    //log için ekle çalışıyor
+    expression = expression.replace(/log(\d+)/g, function(match, number) {
+        return 'Math.log10(' + number + ')';
+    });
+    //ln için ekle // şu an çalışıyor
+    expression = expression.replace(/ln(\d+)/g, function(match, number) {
+        return 'Math.log(' + number + ')';
+    });
+    // çalışıyor şu an
+    expression = expression.replace(/ln(\w+)/g, function(match, number) {
+        return 'Math.log(' + number + ')';
+    });
+
+   // e^x ekleme 
+   expression = expression.replace(/e\^(\w+)/g, function(match, exponent) {
+    return 'Math.exp(' + exponent + ')';
+});
 
     expression = expression.replace(/cos(\d+)/g, function(match, group1) {
         return 'calculateCos(' + group1 + ')';
@@ -71,12 +188,6 @@ function toggleParenthesis() {
     }
 }
 
-function square() {
-    let currentValue = result.value;
-    let squaredValue = Math.pow(parseFloat(currentValue), 2);
-    result.value = squaredValue;
-}
-
 function calculateSin(angleInDegrees) {
     let angleInRadians = angleInDegrees * (Math.PI / 180);
     let sinValue = Math.sin(angleInRadians);
@@ -99,4 +210,13 @@ function calculateCot(angleInDegrees) {
     let angleInRadians = angleInDegrees * (Math.PI / 180);
     let cotValue = 1 / Math.tan(angleInRadians);
     return cotValue;
+}
+
+function saveHistory() {
+    localStorage.setItem('calculatorHistory', JSON.stringify(history));
+}
+
+function loadHistory() {
+    let savedHistory = localStorage.getItem('calculatorHistory');
+    return savedHistory ? JSON.parse(savedHistory) : [];
 }
