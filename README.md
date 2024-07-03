@@ -1,3 +1,5 @@
+##Scientific Calculator
+
 Added decimal numbers.  
 Fixed precision issues with decimal numbers.  
 Deletion operation is working correctly.  
