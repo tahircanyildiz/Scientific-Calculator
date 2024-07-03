@@ -1,5 +1,4 @@
-#Scientific Calculator
-
+# Scientific Calculator #
 Added decimal numbers.  
 Fixed precision issues with decimal numbers.  
 Deletion operation is working correctly.  
@@ -23,6 +22,6 @@ Stored History locally to persist even after page reload.
 Made individual History entries deletable.  
 
 
-You can access and try out the calculator through the following link.
+### You can access and try out the calculator through the following link. ###
 
 https://tahircanyildiz.netlify.app/
