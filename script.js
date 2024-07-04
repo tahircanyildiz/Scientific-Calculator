@@ -5,12 +5,49 @@ let history = loadHistory();
 let isHistoryVisible = false;
 
 function appendToDisplay(value) {
+    let lastChar = result.value.slice(-1);
+     
+    // İlk karakterin operatör mü
+    if (result.value === '' && isOperator(value)) {
+        return; 
+    }
+
+    if (isOperator(lastChar) && isOperator(value)) {
+        return; 
+    }
+
+    if (lastChar === '.' && value === '.') { 
+        return; 
+    }
+
+    if (value === '.' && containsDecimal(result.value)) { //nokta varsa boş dön
+        return; 
+    }
     result.value += value;
 }
 
 function clearDisplay() {
     result.value = '';
     openParenthesisCount = 0;
+}
+
+function isOperator(char) {
+    return ['+', '-', '*', '/','.'].includes(char); // operatör kontrolü
+}
+
+function containsDecimal(value) {
+    let operators = ['+', '-', '*', '/'];
+    let lastOperatorIndex = -1;
+
+    for (let operator of operators) {
+        let index = value.lastIndexOf(operator);
+        if (index > lastOperatorIndex) {
+            lastOperatorIndex = index;
+        }
+    }
+
+    let substring = value.substring(lastOperatorIndex + 1);
+    return substring.includes('.');
 }
 
 function showHistory() {
@@ -103,17 +140,37 @@ function calculate() {
 }
 
 function transformExpression(expression) {
-    // Üs Math.pow
-    expression = expression.replace(/(\d+|\w+|π)\^(\d+)/g, function(match, base, exponent) {
-        if (base === 'π') {
-            base = 'Math.PI';
-        }
-        return 'Math.pow(' + base + ',' + exponent + ')';
-    });  
+    // Üs işlemlerini  
+    while (expression.includes('^')) {
+        expression = expression.replace(/([^(]*?)\^([^()]*)/g, function(match, base, exponent) {
+            base = base.trim();
+            exponent = exponent.trim();
+
+            if (base === '') {
+                base = '1'; 
+            } else if (base === 'π') {
+                base = 'Math.PI';
+            } else if (base === 'e') {
+                base = 'Math.E';
+            }
+            if (exponent === '') {
+                exponent = '1'; 
+            } else if (exponent === 'π') {
+                exponent = 'Math.PI';
+            } else if (exponent === 'e') {
+                exponent = 'Math.E';
+            } else if (exponent.includes('^')) {
+                exponent = exponent.split('^').map(item => transformExpression(item)).join('*');
+            }
+
+            return 'Math.pow(' + base + ', ' + exponent + ')';
+        });
+    }
+    // Karekök işlemleri
     expression = expression.replace(/√(\d+)/g, 'Math.sqrt($1)');
     expression = expression.replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)');
-   
-    // Pi dönüşümü düzelt
+
+    // Pi dönüşümü düzelt // düzeltildi
     expression = expression.replace(/(\d*)π/g, function(match, p1) {
         if (p1) {
             return p1 + '*Math.PI'; // Öncesinde sayı varsa
@@ -121,6 +178,7 @@ function transformExpression(expression) {
             return 'Math.PI';
         }
     });
+
     // e dönüşümü:
     expression = expression.replace(/(\d*)e/g, function(match, p1) {
         if (p1) {
@@ -129,32 +187,30 @@ function transformExpression(expression) {
             return 'Math.E';
         }
     });
-   // abs için düzeltme çalışmıyor şu an
-   expression = expression.replace(/abs\((-?\d+(\.\d+)?)\)/g, 'Math.abs($1)');
 
-  // abs bu çalışıyor tekrar kontrol et
-   expression = expression.replace(/abs(-?\d+(\.\d+)?)/g, function(match, number) {
-    return 'Math.abs(' + number + ')';
-});
+    // Mutlak değer
+    expression = expression.replace(/abs\((-?\d+(\.\d+)?)\)/g, 'Math.abs($1)');
+    expression = expression.replace(/abs(-?\d+(\.\d+)?)/g, function(match, number) {
+        return 'Math.abs(' + number + ')';
+    });
 
-    //log için ekle çalışıyor
+    // Logaritma işlemleri
     expression = expression.replace(/log(\d+)/g, function(match, number) {
         return 'Math.log10(' + number + ')';
     });
-    //ln için ekle // şu an çalışıyor
     expression = expression.replace(/ln(\d+)/g, function(match, number) {
         return 'Math.log(' + number + ')';
     });
-    // çalışıyor şu an
     expression = expression.replace(/ln(\w+)/g, function(match, number) {
         return 'Math.log(' + number + ')';
     });
 
-   // e^x ekleme 
-   expression = expression.replace(/e\^(\w+)/g, function(match, exponent) {
-    return 'Math.exp(' + exponent + ')';
-});
+    // e^x işlemi
+    expression = expression.replace(/e\^(\w+)/g, function(match, exponent) {
+        return 'Math.exp(' + exponent + ')';
+    });
 
+    // Trigonometri işlemleri
     expression = expression.replace(/cos(\d+)/g, function(match, group1) {
         return 'calculateCos(' + group1 + ')';
     });
@@ -167,8 +223,11 @@ function transformExpression(expression) {
     expression = expression.replace(/cot(\d+)/g, function(match, group1) {
         return 'calculateCot(' + group1 + ')';
     });
+
     return expression;
 }
+
+
 
 function toggleScientific() {
     isScientificVisible = !isScientificVisible;
